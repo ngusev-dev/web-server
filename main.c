@@ -1,73 +1,42 @@
-#include <arpa/inet.h>
+#include "server.h"
+#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <sys/socket.h>
 #include <unistd.h>
 
-#define BUFFER_SIZE 1024
-#define PORT 8080
-
 int main() {
-  char buffer[BUFFER_SIZE];
-  char response[] = "HTTP/1.1 200 OK\r\n"
-                    "Content-Type: text/html\r\n\r\n"
-                    "<html><body><h1>Hello, World!</h1></body></html>";
+    struct sockaddr_in addr;
+    int socketfd;
 
-  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if(sockfd == -1) {
-    perror("Error creating socket");
-    return 1;
-  }
-  printf("Socket created successfully\n");
+    socketfd = create_socket();
+    if (socketfd == -1) {
+        return EXIT_FAILURE;
+    }
 
-  struct sockaddr_in addr;
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(PORT);
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (bind_socket(socketfd, &addr) == -1) {
+        close_socket(socketfd);
+        return EXIT_FAILURE;
+    }
 
-  int bind_sock = bind(
-      sockfd,
-      (struct sockaddr *)&addr,
-      sizeof(addr)
-  );
-  if(bind_sock == -1) {
-      perror("Error binding socket");
-      return 1;
-  }
-  printf("Socket bound successfully to address\n");
+    if (listen_socket(socketfd) == -1) {
+        close_socket(socketfd);
+        return EXIT_FAILURE;
+    }
 
-  int listen_socket = listen(sockfd, SOMAXCONN);
-  if(listen_socket == -1) {
-      perror("Error listening on socket");
-      return 1;
-  }
-  printf("Socket listening on port 8080\n");
+    printf("Server started on port %d\n", PORT);
 
-  while(1) {
-      int client_sockfd = accept(sockfd, NULL, NULL);
-      if(client_sockfd == -1) {
-          perror("Error accepting connection");
-          continue;
-      }
-      printf("Client connected = %d\n", client_sockfd);
 
-      int valread = read(client_sockfd, buffer, BUFFER_SIZE);
-      if (valread < 0) {
-          perror("webserver (read)");
-          continue;
-      }
+    while (1) {
+        int client_socket = accept_client(socketfd);
+        if (client_socket == -1) {
+            continue;
+        }
+        handle_client(client_socket);
 
-      int valwrite = write(client_sockfd, response, strlen(response));
-      if (valwrite < 0) {
-          perror("webserver (write)");
-          continue;
-      }
+        if (close(client_socket) == -1) {
+            perror("Error closing client socket");
+        }
+    }
 
-      if(close(client_sockfd) == -1) {
-          perror("Error closing client socket");
-          return 1;
-      }
-  }
-
-  return 0;
+    close_socket(socketfd);
+    return EXIT_SUCCESS;
 }
