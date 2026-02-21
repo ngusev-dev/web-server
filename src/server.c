@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
 
 #include "server.h"
 #include "http.h"
+#include "file.h"
 
 char buffer[BUFFER_SIZE];
 
@@ -70,13 +72,14 @@ void handle_client(int client_sockfd) {
         return;
     }
 
-    char* body = "<html><body><h1>Web-server successfully started</h1></body></html>";
-    int send_bytes = send_http_response(HTTP_OK, client_sockfd, body);
+    char* file_buffer_ptr = get_file_buffer("index.html");
 
+    int send_bytes = send_http_response(HTTP_OK, client_sockfd, file_buffer_ptr);
     printf("Bytes sent: %d\n", send_bytes);
 
     if (send_bytes == -1) {
         perror("Error sending HTTP response");
+        free(file_buffer_ptr);
         return;
     }
 }
