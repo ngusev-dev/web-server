@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "server.h"
+#include "http.h"
 
 char buffer[BUFFER_SIZE];
 
@@ -68,9 +69,14 @@ void handle_client(int client_sockfd) {
         perror("webserver (read)");
         return;
     }
-    int valwrite = write(client_sockfd, DEFAULT_RESPONSE, strlen(DEFAULT_RESPONSE));
-    if (valwrite < 0) {
-        perror("webserver (write)");
+
+    char* body = "<html><body><h1>Web-server successfully started</h1></body></html>";
+    int send_bytes = send_http_response(HTTP_OK, client_sockfd, body);
+
+    printf("Bytes sent: %d\n", send_bytes);
+
+    if (send_bytes == -1) {
+        perror("Error sending HTTP response");
         return;
     }
 }
