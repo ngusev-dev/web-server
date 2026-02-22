@@ -32,5 +32,7 @@ char* get_file_buffer(char* filename) {
     int read_bytes = fread(file_buffer, 1, file_size, file);
     file_buffer[read_bytes] = '\0';
 
+    fclose(file);
+
     return file_buffer;
 }

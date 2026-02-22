@@ -9,7 +9,7 @@
 #include "http.h"
 #include "file.h"
 
-char buffer[BUFFER_SIZE];
+char request_buffer[BUFFER_SIZE];
 
 int create_socket(void) {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -65,22 +65,40 @@ int accept_client(int sockfd) {
     return client_sockfd;
 }
 
-void handle_client(int client_sockfd) {
-    int valread = read(client_sockfd, buffer, BUFFER_SIZE);
+void handle_client(int client_sockfd, ServerConfig* config) {
+    int valread = read(client_sockfd, request_buffer, BUFFER_SIZE);
     if (valread < 0) {
-        perror("webserver (read)");
+        perror("Error reading client request");
         return;
     }
 
-    char* file_buffer_ptr = get_file_buffer("index.html");
+    const char* path = parse_request_path(request_buffer);
+    if(path == NULL) return;
 
-    int send_bytes = send_http_response(HTTP_OK, client_sockfd, file_buffer_ptr);
-    printf("Bytes sent: %d\n", send_bytes);
+    int is_route_found = 0;
+    for(int i = 0; i < config->routes_count; i++){
+        printf("Comparing '%s' with config '%s'\n", path, config->routes[i].path);
 
-    if (send_bytes == -1) {
-        perror("Error sending HTTP response");
+        if(strcmp(path, config->routes[i].path) == 0){
+            char* file_buffer_ptr = get_file_buffer(config->routes[i].file);
+            int send_bytes = send_http_response(HTTP_OK, client_sockfd, file_buffer_ptr);
+            printf("Bytes sent: %d\n", send_bytes);
+
+            free(file_buffer_ptr);
+            if (send_bytes == -1) {
+                perror("Error sending HTTP response");
+                break;
+            }
+            is_route_found = 1;
+            break;
+        }
+    }
+
+    if (!is_route_found) {
+        printf("No route found for path: '%s'\n", path);
+        char* file_buffer_ptr = get_file_buffer("index.html");
+        send_http_response(HTTP_NOT_FOUND, client_sockfd, file_buffer_ptr);
         free(file_buffer_ptr);
-        return;
     }
 }
 

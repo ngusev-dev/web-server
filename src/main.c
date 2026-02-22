@@ -1,7 +1,9 @@
-#include "server.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#include "server.h"
+#include "server_config.h"
 
 int main() {
     struct sockaddr_in addr;
@@ -24,13 +26,19 @@ int main() {
 
     printf("Server started on port %d\n", PORT);
 
+    ServerConfig* config = load_server_config();
+    if(config == NULL) {
+        close_socket(socketfd);
+        return EXIT_FAILURE;
+    }
 
     while (1) {
         int client_socket = accept_client(socketfd);
         if (client_socket == -1) {
             continue;
         }
-        handle_client(client_socket);
+
+        handle_client(client_socket, config);
 
         if (close(client_socket) == -1) {
             perror("Error closing client socket");

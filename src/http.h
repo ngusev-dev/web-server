@@ -15,7 +15,8 @@ typedef enum {
     HTTP_GATEWAY_TIMEOUT = 504
 } HTTP_STATUS;
 
-#define RESPONSE_SIZE 4096
+#define RESPONSE_SIZE 8186
 
 int send_http_response(HTTP_STATUS status, int socketfd, char* body);
 const char* get_http_status_string(HTTP_STATUS status);
+const char* parse_request_path(char* request_buffer);

@@ -69,3 +69,30 @@ const char* get_http_status_string(HTTP_STATUS status) {
         default:                            return "HTTP/1.1 500 Internal Server Error\r\n";
     }
 }
+
+/*
+ * Parse the request path from the request buffer.
+ *
+ * @param request_buffer The request buffer.
+ * @return The request path.
+ */
+const char* parse_request_path(char* request_buffer) {
+    const char* start = strstr(request_buffer, "GET ");
+    if (!start) start = strstr(request_buffer, "POST ");
+    if (!start) start = strstr(request_buffer, "HEAD ");
+    if (!start) return NULL;
+
+    start += 4;
+
+    const char* end = strstr(start, " HTTP/");
+    if (!end) return NULL;
+
+    size_t path_len = end - start;
+    static char path[1024];
+    if (path_len >= sizeof(path)) return NULL;
+
+    strncpy(path, start, path_len);
+    path[path_len] = '\0';
+
+    return path;
+}
