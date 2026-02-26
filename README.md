@@ -13,3 +13,9 @@
 </div>
 
 <img width="1711" height="836" alt="image" src="https://github.com/user-attachments/assets/4317edfb-0939-4ae2-9ebb-d8d7de1313f0" />
+
+# 💻 File configuration
+
+The web server is configured in the `web-server.config.json` file and has the following structure:
+
+<img width="1662" height="728" alt="image" src="https://github.com/user-attachments/assets/e7f7c0fc-dbd3-4c27-aa03-34ab4649e417" />
