@@ -8,6 +8,7 @@
 #include "server.h"
 #include "http.h"
 #include "file.h"
+#include "server_config.h"
 
 char request_buffer[BUFFER_SIZE];
 
@@ -24,9 +25,9 @@ int create_socket(void) {
     return sockfd;
 }
 
-int bind_socket(int socketfd, struct sockaddr_in *addr) {
+int bind_socket(int socketfd, struct sockaddr_in *addr, port_t port) {
     addr->sin_family = AF_INET;
-    addr->sin_port = htons(PORT);
+    addr->sin_port = htons(port);
     addr->sin_addr.s_addr = htonl(INADDR_ANY);
 
     int bind_result = bind(socketfd, (struct sockaddr *)addr, sizeof(*addr));
@@ -41,7 +42,7 @@ int bind_socket(int socketfd, struct sockaddr_in *addr) {
     return 0;
 }
 
-int listen_socket(int socketfd) {
+int listen_socket(int socketfd, port_t port) {
     int listen_result = listen(socketfd, SOMAXCONN);
 
     if(listen_result == -1) {
@@ -49,7 +50,7 @@ int listen_socket(int socketfd) {
         return -1;
     }
 
-    printf("Socket listening on port %d\n", PORT);
+    printf("Socket listening on port %d\n", port);
 
     return 0;
 }

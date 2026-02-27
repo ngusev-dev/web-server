@@ -6,6 +6,9 @@
 #include "server_config.h"
 
 int main() {
+    ServerConfig* config = load_server_config();
+    if(config == NULL)  return EXIT_FAILURE;
+
     struct sockaddr_in addr;
     int socketfd;
 
@@ -14,20 +17,12 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    if (bind_socket(socketfd, &addr) == -1) {
+    if (bind_socket(socketfd, &addr, *config->port) == -1) {
         close_socket(socketfd);
         return EXIT_FAILURE;
     }
 
-    if (listen_socket(socketfd) == -1) {
-        close_socket(socketfd);
-        return EXIT_FAILURE;
-    }
-
-    printf("Server started on port %d\n", PORT);
-
-    ServerConfig* config = load_server_config();
-    if(config == NULL) {
+    if (listen_socket(socketfd, *config->port) == -1) {
         close_socket(socketfd);
         return EXIT_FAILURE;
     }

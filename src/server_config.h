@@ -2,6 +2,9 @@
 #define SERVER_CONFIG_H
 
 #include <stdio.h>
+#include <stdint.h>
+
+typedef uint16_t port_t;
 
 typedef struct RouteConfig {
     char* path;
@@ -9,6 +12,7 @@ typedef struct RouteConfig {
 } RouteConfig;
 
 typedef struct ServerConfig {
+    port_t* port;
     RouteConfig* routes;
     size_t routes_count;
 } ServerConfig;

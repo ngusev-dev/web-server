@@ -33,6 +33,14 @@ ServerConfig* load_server_config() {
         return NULL;
     }
 
+    cJSON* config_port = cJSON_GetObjectItem(config_json, "port");
+
+    if (!cJSON_IsNumber(config_port)) {
+        perror("No 'port' number found\n");
+        cJSON_Delete(config_json);
+        return NULL;
+    }
+
     cJSON* config_routes = cJSON_GetObjectItem(config_json, "routes");
 
     if (!cJSON_IsArray(config_routes)) {
@@ -48,31 +56,34 @@ ServerConfig* load_server_config() {
         return NULL;
     }
 
-    if(cJSON_IsArray(config_routes)) {
-        config->routes_count = cJSON_GetArraySize(config_routes);
-        config->routes = malloc(config->routes_count * sizeof(RouteConfig));
+    config->port = malloc(sizeof(config_port->valueint) + 1);
+    *config->port = (port_t)config_port->valueint;
 
-        for(int i = 0; i < config->routes_count; i++) {
-            cJSON* route_json = cJSON_GetArrayItem(config_routes, i);
-            if(cJSON_IsObject(route_json)) {
-                cJSON* path = cJSON_GetObjectItem(route_json, "path");
-                cJSON* file = cJSON_GetObjectItem(route_json, "file");
+    printf("Port = [%d]\n", *config->port);
 
-                config->routes[i].path = malloc(strlen(path->valuestring) + 1);
-                config->routes[i].file = malloc(strlen(file->valuestring) + 1);
+    config->routes_count = cJSON_GetArraySize(config_routes);
+    config->routes = malloc(config->routes_count * sizeof(RouteConfig));
 
-                strcpy(
-                    config->routes[i].path,
-                    path ?  path->valuestring : NULL
-                );
-                strcpy(
-                    config->routes[i].file ,
-                    file ?  file->valuestring : NULL
-                );
+    for(int i = 0; i < config->routes_count; i++) {
+        cJSON* route_json = cJSON_GetArrayItem(config_routes, i);
+        if(cJSON_IsObject(route_json)) {
+            cJSON* path = cJSON_GetObjectItem(route_json, "path");
+            cJSON* file = cJSON_GetObjectItem(route_json, "file");
 
-                printf("Route[%d]: path='%s' file='%s'\n", i,
-                               config->routes[i].path, config->routes[i].file);
-            }
+            config->routes[i].path = malloc(strlen(path->valuestring) + 1);
+            config->routes[i].file = malloc(strlen(file->valuestring) + 1);
+
+            strcpy(
+                config->routes[i].path,
+                path ?  path->valuestring : NULL
+            );
+            strcpy(
+                config->routes[i].file ,
+                file ?  file->valuestring : NULL
+            );
+
+            printf("Route[%d]: path='%s' file='%s'\n", i,
+                           config->routes[i].path, config->routes[i].file);
         }
     }
 
@@ -87,6 +98,8 @@ void free_config(ServerConfig* config) {
     if(config == NULL) {
         return;
     }
+
+    free(config->port);
 
     for (size_t i = 0; i < config->routes_count; i++) {
         free(config->routes[i].path);
