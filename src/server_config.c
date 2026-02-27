@@ -11,7 +11,15 @@
  * Loads the server configuration from a JSON file.
  */
 ServerConfig* load_server_config() {
-    char* config_buffer = get_file_buffer("config/web-server.config.json");
+    char* path = create_filepath(CONFIG_FOLDER, "web-server.config.json");
+    if(path == NULL) {
+        perror("Failed to create filepath for config file\n");
+        return NULL;
+    }
+
+    char* config_buffer = get_file_buffer(path);
+    free(path);
+
     if(config_buffer == NULL) {
         perror("Failed to read config file\n");
         return NULL;

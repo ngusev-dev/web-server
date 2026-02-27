@@ -80,7 +80,15 @@ void handle_client(int client_sockfd, ServerConfig* config) {
         printf("Comparing '%s' with config '%s'\n", path, config->routes[i].path);
 
         if(strcmp(path, config->routes[i].path) == 0){
-            char* file_buffer_ptr = get_file_buffer(config->routes[i].file);
+            char* path = create_filepath(STATIC_FILES_FOLDER, config->routes[i].file);
+            if(path == NULL) {
+                perror("Failed to create filepath for static file\n");
+                continue;
+            }
+
+            char* file_buffer_ptr = get_file_buffer(path);
+            free(path);
+
             int send_bytes = send_http_response(HTTP_OK, client_sockfd, file_buffer_ptr);
             printf("Bytes sent: %d\n", send_bytes);
 
@@ -96,8 +104,18 @@ void handle_client(int client_sockfd, ServerConfig* config) {
 
     if (!is_route_found) {
         printf("No route found for path: '%s'\n", path);
-        char* file_buffer_ptr = get_file_buffer("index.html");
+
+        char* path = create_filepath(STATIC_FILES_FOLDER, "index.html");
+        if(path == NULL) {
+            perror("Failed to create filepath for static file\n");
+            return;
+        }
+
+        char* file_buffer_ptr = get_file_buffer(path);
+        free(path);
+
         send_http_response(HTTP_NOT_FOUND, client_sockfd, file_buffer_ptr);
+
         free(file_buffer_ptr);
     }
 }
